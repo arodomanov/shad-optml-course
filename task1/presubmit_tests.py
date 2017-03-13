@@ -578,6 +578,6 @@ def test_newton_fail():
                                                  display=False, trace=False,
                                                  line_search_options={'method': 'Constant', 'c': 1})
     warnings.filterwarnings("default")
-    eq_(msg, 'newton_direction_error')
+    eq_(msg, 'computational_error')
     eq_(history, None)
 
