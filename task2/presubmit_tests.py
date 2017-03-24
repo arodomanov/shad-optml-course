@@ -61,32 +61,20 @@ class TestCG(unittest.TestCase):
         self.assertLessEqual(g_k_norm, 1e-4 * norm(self.b))
         self.assertEqual(len(output), 0, 'You should not print anything by default.')
 
-    def test_tol(self):
-        """Check if argument `tol` is supported."""
+    def test_tolerance(self):
+        """Check if argument `tolerance` is supported."""
         conjugate_gradients(self.matvec, self.b, self.x0, tolerance=1e-6)
 
     def test_max_iter(self):
         """Check argument `max_iter` is supported and can be set to None."""
         conjugate_gradients(self.matvec, self.b, self.x0, max_iter=None)
 
-    def test_disp(self):
-        """Check if something is printed when `disp` is True."""
+    def test_display(self):
+        """Check if something is printed when `display` is True."""
         with Capturing() as output:
             conjugate_gradients(self.matvec, self.b, self.x0, display=True)
 
         self.assertLess(0, len(output), 'You should print the progress when `display` is True.')
-
-    def test_trace(self):
-        """Check if the history is returned correctly when `trace` is True."""
-        x_sol, message, hist = conjugate_gradients(self.matvec, self.b, self.x0, trace=True)
-
-        self.assertTrue(isinstance(hist['residual_norm'], list) or isinstance(hist['residual_norm'], np.ndarray))
-        self.assertEqual(len(hist['residual_norm']), len(hist['time']))
-        self.assertEqual(len(hist['residual_norm']), len(hist['x']))
-
-        x_sol, message, hist = conjugate_gradients(self.matvec, self.b, self.x0, trace=False)
-        self.assertTrue(hist is None)
-
 
     def test_histories(self):
         x_sol, message, history = conjugate_gradients(self.matvec, self.b, self.x0, trace=True)
@@ -95,9 +83,8 @@ class TestCG(unittest.TestCase):
                     0.0]
         time_steps = [0.0] * 3  # Dummy values
         x_steps = [np.array([0, 0]),
-                   np.array([ 0.50684932,  3.04109589]),
-                   np.array([ 1.,  3.])
-                   ]
+                   np.array([0.50684932, 3.04109589]),
+                   np.array([1., 3.])]
         true_history = dict(residual_norm=res_norm, time=time_steps, x=x_steps)
         check_equal_histories(history, true_history)
 
@@ -120,7 +107,7 @@ class TestNCG(unittest.TestCase):
         assert_equal(message, 'success')
         self.assertEqual(len(output), 0, 'You should not print anything by default.')
 
-    def test_tol(self):
+    def test_tolerance(self):
         """Check if argument `tolerance` is supported."""
         nonlinear_conjugate_gradients(self.oracle, self.x0, tolerance=1e-5)
 
@@ -139,17 +126,6 @@ class TestNCG(unittest.TestCase):
 
         self.assertTrue(len(output) > 0, 'You should print the progress when `display` is True.')
 
-    def test_trace(self):
-        """Check if the history is returned correctly when `trace` is True."""
-        x_min, message, hist = nonlinear_conjugate_gradients(self.oracle, self.x0, trace=True)
-
-        self.assertEqual(len(hist['grad_norm']), len(hist['func']))
-        self.assertEqual(len(hist['time']), len(hist['func']))
-        self.assertEqual(len(hist['x']), len(hist['func']))
-
-        x_min, message, hist = nonlinear_conjugate_gradients(self.oracle, self.x0, trace=False)
-        self.assertTrue(hist is None)
-
     def test_quality(self):
         x_min, message, _ = nonlinear_conjugate_gradients(self.oracle, self.x0, tolerance=1e-5)
         f_min = self.oracle.func(x_min)
@@ -159,7 +135,7 @@ class TestNCG(unittest.TestCase):
         self.assertLessEqual(g_k_norm_sqr, 1e-5 * g_0_norm_sqr)
         self.assertLessEqual(abs(f_min - self.f_star), 1e-5 * g_0_norm_sqr)
 
-    def test_histories(self):
+    def test_history(self):
         x0 = -np.array([1.3, 2.7])
         x_min, message, history = nonlinear_conjugate_gradients(self.oracle, x0, trace=True,
                                         line_search_options={'method': 'Constant', 'c': 0.6},
@@ -185,7 +161,6 @@ class TestNCG(unittest.TestCase):
                    np.array([1.02038104, 3.04515707])]
         true_history = dict(grad_norm=grad_norm_steps, time=time_steps, x=x_steps, func=func_steps)
         check_equal_histories(history, true_history)
-        self.assertEqual(message, "success")
 
 
 class TestLBFGS(unittest.TestCase):
@@ -206,9 +181,9 @@ class TestLBFGS(unittest.TestCase):
         assert_equal(message, 'success')
         self.assertEqual(len(output), 0, 'You should not print anything by default.')
 
-    def test_tol(self):
-        """Check if argument `tol` is supported."""
-        lbfgs(self.oracle, self.x0, tolerance=1e-6)
+    def test_tolerance(self):
+        """Check if argument `tolerance` is supported."""
+        lbfgs(self.oracle, self.x0, tolerance=1e-5)
 
     def test_max_iter(self):
         """Check if argument `max_iter` is supported."""
@@ -222,34 +197,23 @@ class TestLBFGS(unittest.TestCase):
         """Check if argument `line_search_options` is supported."""
         lbfgs(self.oracle, self.x0, line_search_options={'method': 'Wolfe', 'c1': 1e-4, 'c2': 0.9})
 
-    def test_disp(self):
-        """Check if something is printed when `disp` is True."""
+    def test_display(self):
+        """Check if something is printed when `display` is True."""
         with Capturing() as output:
             lbfgs(self.oracle, self.x0, display=True)
 
         self.assertTrue(len(output) > 0, 'You should print the progress when `display` is True.')
 
-    def test_trace(self):
-        """Check if the history is returned correctly when `trace` is True."""
-        x_min, message, hist = lbfgs(self.oracle, self.x0, trace=True)
-
-        self.assertEqual(len(hist['grad_norm']), len(hist['func']))
-        self.assertEqual(len(hist['time']), len(hist['func']))
-        self.assertEqual(len(hist['x']), len(hist['func']))
-
-        x_min, message, hist = lbfgs(self.oracle, self.x0, trace=False)
-        self.assertTrue(hist is None)
-
-
     def test_quality(self):
-        x_min, message, _ = lbfgs(self.oracle, self.x0, tolerance=1e-10)
+        x_min, message, _ = lbfgs(self.oracle, self.x0, tolerance=1e-5)
         f_min = self.oracle.func(x_min)
 
-        g_k_norm = norm(self.A.dot(x_min) - self.b, 2)
-        self.assertLessEqual(abs(g_k_norm), 1e-3)
-        self.assertLessEqual(abs(f_min - self.f_star), 1e-3)
+        g_k_norm_sqr = norm(self.A.dot(x_min) - self.b, 2)**2
+        g_0_norm_sqr = norm(self.A.dot(self.x0) - self.b, 2)**2
+        self.assertLessEqual(g_k_norm_sqr, 1e-5 * g_0_norm_sqr)
+        self.assertLessEqual(abs(f_min - self.f_star), 1e-5 * g_0_norm_sqr)
 
-    def test_histories(self):
+    def test_history(self):
         x0 = -np.array([1.3, 2.7])
         x_min, message, history = lbfgs(self.oracle, x0, trace=True, memory_size=10, line_search_options={'method': 'Constant', 'c': 1.0},
                                         tolerance=1e-6)
@@ -265,17 +229,15 @@ class TestLBFGS(unittest.TestCase):
                            0.0]
         time_steps = [0.0] * 5  # Dummy values
         x_steps = [np.array([-1.3, -2.7]),
-                   np.array([1.0,  8.7]),
-                   np.array([0.45349973,  3.05512941]),
-                   np.array([0.73294321,  3.01292737]),
-                   np.array([0.99999642,  2.99998814])]
+                   np.array([1.0, 8.7]),
+                   np.array([0.45349973, 3.05512941]),
+                   np.array([0.73294321, 3.01292737]),
+                   np.array([0.99999642, 2.99998814])]
         true_history = dict(grad_norm=grad_norm_steps, time=time_steps, x=x_steps, func=func_steps)
         check_equal_histories(history, true_history)
-        self.assertEqual(message, "success")
-        assert_array_almost_equal(x_min, np.array([1.0, 3.0]), decimal=3)
 
-    @unittest.skipUnless(test_bonus, 'Skipping bonus tests...')
-    def test_lbfgs_history(self):
+    @unittest.skipUnless(test_bonus, 'Skipping bonus test...')
+    def test_history_best(self):
         x0 = -np.array([1.3, 2.7])
         x_min, message, history = lbfgs(self.oracle, x0, trace=True, memory_size=10, line_search_options={'method': 'Best'}, tolerance=1e-6)
         func_steps = [25.635000000000005,
@@ -286,12 +248,10 @@ class TestLBFGS(unittest.TestCase):
                            0]
         time_steps = [0.0] * 3  # Dummy values
         x_steps = [np.array([-1.3, -2.7]),
-                   np.array([-0.12706157,  3.11369481]),
-                   np.array([1.,  3.])]
+                   np.array([-0.12706157, 3.11369481]),
+                   np.array([1., 3.])]
         true_history = dict(grad_norm=grad_norm_steps, time=time_steps, x=x_steps, func=func_steps)
         check_equal_histories(history, true_history)
-        self.assertEqual(message, "success")
-        assert_array_almost_equal(x_min, np.array([1.0, 3.0]), decimal=3)
 
 
 class TestHFN(unittest.TestCase):
@@ -312,9 +272,9 @@ class TestHFN(unittest.TestCase):
         assert_equal(message, 'success')
         self.assertTrue(len(output) == 0, 'You should not print anything by default.')
 
-    def test_tol(self):
-        """Check if argument `tol` is supported."""
-        hessian_free_newton(self.oracle, self.x0, tolerance=1e-6)
+    def test_tolerance(self):
+        """Check if argument `tolerance` is supported."""
+        hessian_free_newton(self.oracle, self.x0, tolerance=1e-5)
 
     def test_max_iter(self):
         """Check if argument `max_iter` is supported."""
@@ -324,33 +284,23 @@ class TestHFN(unittest.TestCase):
         """Check if argument `line_search_options` is supported."""
         hessian_free_newton(self.oracle, self.x0, line_search_options={'method': 'Wolfe', 'c1': 1e-4, 'c2': 0.9})
 
-    def test_disp(self):
-        """Check if something is printed when `disp` is True."""
+    def test_display(self):
+        """Check if something is printed when `display` is True."""
         with Capturing() as output:
             hessian_free_newton(self.oracle, self.x0, display=True)
 
         self.assertTrue(len(output) > 0, 'You should print the progress when `display` is True.')
 
-    def test_trace(self):
-        """Check if the history is returned correctly when `trace` is True."""
-        x_min, message, hist = hessian_free_newton(self.oracle, self.x0, trace=True)
-
-        self.assertEqual(len(hist['grad_norm']), len(hist['func']))
-        self.assertEqual(len(hist['time']), len(hist['func']))
-        self.assertEqual(len(hist['x']), len(hist['func']))
-
-        x_min, message, hist = hessian_free_newton(self.oracle, self.x0, trace=False)
-        self.assertTrue(hist is None)
-
     def test_quality(self):
-        x_min, message, _ = hessian_free_newton(self.oracle, self.x0, tolerance=1e-10)
+        x_min, message, _ = hessian_free_newton(self.oracle, self.x0, tolerance=1e-5)
         f_min = self.oracle.func(x_min)
 
-        g_k_norm = norm(self.A.dot(x_min) - self.b, 2)
-        self.assertLessEqual(abs(g_k_norm), 1e-3)
-        self.assertLessEqual(abs(f_min - self.f_star), 1e-3)
+        g_k_norm_sqr = norm(self.A.dot(x_min) - self.b, 2)**2
+        g_0_norm_sqr = norm(self.A.dot(self.x0) - self.b, 2)**2
+        self.assertLessEqual(g_k_norm_sqr, 1e-5 * g_0_norm_sqr)
+        self.assertLessEqual(abs(f_min - self.f_star), 1e-5 * g_0_norm_sqr)
 
-    def test_histories(self):
+    def test_history(self):
         x0 = -np.array([1.3, 2.7])
         x_min, message, history = hessian_free_newton(self.oracle, x0, trace=True, line_search_options={'method': 'Constant', 'c': 1.0},
                                                       tolerance=1e-6)
@@ -362,23 +312,6 @@ class TestHFN(unittest.TestCase):
                    np.array([1., 3.])]
         true_history = dict(grad_norm=grad_norm_steps, time=time_steps, x=x_steps, func=func_steps)
         check_equal_histories(history, true_history)
-        self.assertEqual(message, "success")
-        assert_array_almost_equal(x_min, np.array([1.0, 3.0]), decimal=3)
-
-    @unittest.skipUnless(test_bonus, 'Skipping bonus tests...')
-    def test_hfn_history(self):
-        x0 = -np.array([1.3, 2.7])
-        x_min, message, history = hessian_free_newton(self.oracle, x0, trace=True, line_search_options={'method': 'Best'}, tolerance=1e-6)
-
-        func_steps = [25.635, -9.5]
-        grad_norm_steps = [11.629703349613008, 0.0]
-        time_steps = [0.0] * 2  # Dummy values
-        x_steps = [np.array([-1.3, -2.7]),
-                   np.array([1., 3.])]
-        true_history = dict(grad_norm=grad_norm_steps, time=time_steps, x=x_steps, func=func_steps)
-        check_equal_histories(history, true_history)
-        self.assertEqual(message, "success")
-        assert_array_almost_equal(x_min, np.array([1.0, 3.0]), decimal=3)
 
 
 class TestHessVec(unittest.TestCase):
@@ -404,8 +337,8 @@ class TestHessVec(unittest.TestCase):
         assert_array_almost_equal(hess_vec_real, hess_vec_test, decimal=3)
 
 
-@unittest.skipUnless(test_bonus, 'Skipping bonus tests...')
-class TestBestLinesearch(unittest.TestCase):
+@unittest.skipUnless(test_bonus, 'Skipping bonus test...')
+class TestBestLineSearch(unittest.TestCase):
     # Define a simple quadratic function for testing
     A = np.array([[1, 0], [0, 2]])
     b = np.array([1, 6])
