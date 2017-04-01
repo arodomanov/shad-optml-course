@@ -42,7 +42,7 @@ def check_equal_histories(test_history, reference_history, atol=1e-3):
             assert_equal(len(test_history[key]), len(reference_history[key]))
             test_time = np.asarray(test_history['time'])
             assert_equal(np.all(test_time >= 0), True)
-            assert_equal(np.all(test_time[1:] - test_time[:-1] > 0), True)
+            assert_equal(np.all(test_time[1:] - test_time[:-1] >= 0), True)
 
 
 class TestCG(unittest.TestCase):
