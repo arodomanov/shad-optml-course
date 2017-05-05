@@ -36,7 +36,13 @@ def barrier_method_lasso(A, b, reg_coef, x_0, u_0, tolerance=1e-5,
     u_0 : np.array
         Starting value for u in optimization algorithm.
     tolerance : float
-        Epsilon value for stopping criterion.
+        Epsilon value for the outer loop stopping criterion:
+        Stop the outer loop (which iterates over `k`) when
+            `duality_gap(x_k) <= tolerance`
+    tolerance_inner : float
+        Epsilon value for the inner loop stopping criterion.
+        Stop the inner loop (which iterates over `l`) when
+            `|| \nabla phi_t(x_k^l) ||_2^2 <= tolerance_inner * \| \nabla \phi_t(x_k) \|_2^2 `
     max_iter : int
         Maximum number of iterations for interior point method.
     max_iter_inner : int
@@ -71,7 +77,7 @@ def barrier_method_lasso(A, b, reg_coef, x_0, u_0, tolerance=1e-5,
         Dictionary containing the progress information or None if trace=False.
         Dictionary has to be organized as follows:
             - history['time'] : list of floats, containing time in seconds passed from the start of the method
-            - history['func'] : list of function values f(x_k) on every step of the algorithm
+            - history['func'] : list of function values f(x_k) on every **outer** iteration of the algorithm
             - history['duality_gap'] : list of duality gaps
             - history['x'] : list of np.arrays, containing the trajectory of the algorithm. ONLY STORE IF x.size <= 2
     """
